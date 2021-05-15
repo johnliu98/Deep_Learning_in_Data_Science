@@ -1,1 +1,2 @@
-# Deep_Learning_in_Data_Science
+# DD2424 Deep Learning in Data Science
+## VT21
