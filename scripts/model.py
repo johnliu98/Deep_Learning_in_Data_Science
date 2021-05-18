@@ -39,6 +39,26 @@ test = datasets.MNIST('', train=False, download=True,
 trainset = torch.utils.data.DataLoader(train, batch_size=10, shuffle=True)
 testset = torch.utils.data.DataLoader(test, batch_size=10, shuffle=False)
 
+
+def channel_shuffle(x, groups):
+    batchsize, channels, height, width = x.data.size()
+
+    channels_per_group = channels // groups
+
+    # reshape
+    x = x.view(batchsize, groups,
+               channels_per_group, height, width)
+
+    # transpose
+    # - contiguous() required if transpose() is used before view().
+    #   See https://github.com/pytorch/pytorch/issues/764
+    x = torch.transpose(x, 1, 2).contiguous()
+
+    # flatten
+    x = x.view(batchsize, -1, height, width)
+
+    return x
+
 class ShuffleUnit(nn.Module):
 
     def __init__(self, in_channels, out_channels, groups=3,
@@ -148,8 +168,19 @@ class ShuffleUnit(nn.Module):
         else:
             return conv
 
-    def forward(self):
-        pass
+    def forward(self, x):
+        residual = x
+
+        if self.combine == 'concat':
+            residual = F.avg_pool2d(residual, kernel_size=3, stride=2, padding=1)
+
+        out = self.g_conv_1x1_compress(x)
+        out = channel_shuffle(out, self.groups)
+        out = self.depthwise_conv3x3(out)
+        out = self.g_conv_1x1_expand(out)
+
+        out = self._combine_func(residual, out)
+        return F.relu(out)
 
 class ShuffleNet(nn.Module):
 
