@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from tqdm import tqdm
-import pandas
+import pandas as pd
 import matplotlib.pyplot as plt
 
 import torch
