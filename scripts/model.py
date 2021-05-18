@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
+from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -10,7 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 import torchvision
-from torchvision import transforms
+from torchvision import transforms, datasets
 
 # Set random seed
 np.random.seed(0)
@@ -23,6 +24,20 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
     print("Running on CPU...")
+
+# Get MNIST dataset
+train = datasets.MNIST('', train=True, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ]))
+
+test = datasets.MNIST('', train=False, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ]))
+
+trainset = torch.utils.data.DataLoader(train, batch_size=10, shuffle=True)
+testset = torch.utils.data.DataLoader(test, batch_size=10, shuffle=False)
 
 class ShuffleUnit(nn.Module):
 
@@ -58,17 +73,33 @@ class ShuffleUnit(nn.Module):
         # Use a 1x1 grouped or non-grouped convolution to reduce input channels
         # to bottleneck channels, as in a ResNet bottleneck module.
         # NOTE: Do not use group convolution for the first conv1x1 in Stage 2.
-        self.first_1x1_groups = None
+        self.first_1x1_groups = self.groups
 
-        self.g_conv_1x1_compress = None
+        self.g_conv_1x1_compress = self._make_grouped_conv1x1(
+            self.in_channels,
+            self.bottleneck_channels,
+            groups=self.first_1x1_groups,
+            batch_norm=True,
+            relu=True)
 
         # 3x3 depthwise convolution followed by batch normalization
-        self.depthwise_conv3x3 = None
-        self.bn_after_depthwise = None
+        self.depthwise_conv3x3 = self._make_conv3x3(
+            self.bottleneck_channels,
+            self.bottleneck_channels,
+            groups=self.bottleneck_channels,
+            padding=1,
+            batch_norm=True
+        )
 
         # Use 1x1 grouped convolution to expand from
         # bottleneck_channels to out_channels
-        self.g_conv_1x1_expand = None
+        self.g_conv_1x1_expand = self._make_grouped_conv1x1(
+            self.bottleneck_channels,
+            self.out_channels,
+            self.groups,
+            batch_norm=True,
+            relu=False
+        )
 
     @staticmethod
     def _add(x, out):
@@ -80,6 +111,45 @@ class ShuffleUnit(nn.Module):
         # concatenate along channel axis
         return torch.cat((x, out), 1)
 
+    def _make_grouped_conv1x1(self, in_channels, out_channels, groups,
+                              batch_norm=True, relu=False):
+
+        modules = OrderedDict()
+
+        conv = nn.Conv2d(in_channels, out_channels,
+                         kernel_size=1,
+                         groups=groups)
+        modules['conv'] = conv
+
+        if batch_norm:
+            modules['batch_norm'] = nn.BatchNorm2d(out_channels)
+        if relu:
+            modules['relu'] = nn.ReLU()
+        if len(modules) > 1:
+            return nn.Sequential(modules)
+        else:
+            return conv
+
+    def _make_conv3x3(self, in_channels, out_channels, groups,
+                      padding=1, batch_norm=True):
+
+        modules = OrderedDict()
+
+        conv = nn.Conv2d(in_channels, out_channels,
+                         kernel_size=3,
+                         groups=groups,
+                         padding=padding)
+        modules['conv'] = conv
+
+        if batch_norm:
+            modules['batch_norm'] = batch_norm
+        if len(modules) > 1:
+            return nn.Sequential(modules)
+        else:
+            return conv
+
+    def forward(self):
+        pass
 
 class ShuffleNet(nn.Module):
 
