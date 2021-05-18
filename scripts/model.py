@@ -26,8 +26,49 @@ else:
 
 class ShuffleUnit(nn.Module):
 
-    def __init__(self):
+    def __init__(self, in_channels, out_channels, groups=3,
+                 grouped_conv=True, combine='add'):
         super(ShuffleUnit, self).__init__()
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.grouped_conv = grouped_conv
+        self.combine = combine
+        self.groups = groups
+        self.bottleneck_channels = out_channels // 4
+
+        # define the type of ShuffleUnit
+        if self.combine == 'add':
+            # ShuffleUnit Figure 2b
+            self.depthwise_stride = 1
+            self._combine_func = self._add
+        elif self.combine == 'concat':
+            # ShuffleUnit Figure 2c
+            self.depthwise_stride = 2
+            self._combine_func = self._concat
+
+            # ensure output of concat has the same channels as
+            # original output channels.
+            self.out_channels -= self.in_channels
+        else:
+            raise ValueError("Cannot combine tensors with \"{}\"" \
+                             "Only \"add\" and \"concat\" are" \
+                             "supported".format(self.combine))
+
+        # Use a 1x1 grouped or non-grouped convolution to reduce input channels
+        # to bottleneck channels, as in a ResNet bottleneck module.
+        # NOTE: Do not use group convolution for the first conv1x1 in Stage 2.
+        self.first_1x1_groups = None
+
+        self.g_conv_1x1_compress = None
+
+        # 3x3 depthwise convolution followed by batch normalization
+        self.depthwise_conv3x3 = None
+        self.bn_after_depthwise = None
+
+        # Use 1x1 grouped convolution to expand from
+        # bottleneck_channels to out_channels
+        self.g_conv_1x1_expand = None
 
     @staticmethod
     def _add(x, out):
