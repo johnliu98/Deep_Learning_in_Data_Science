@@ -83,7 +83,7 @@ class ShuffleUnit(nn.Module):
             relu=True)
 
         # 3x3 depthwise convolution followed by batch normalization
-        self.depthwise_conv3x3 = self._make_conv3x3(
+        self.depthwise_conv3x3 = self._make_grouped_conv3x3(
             self.bottleneck_channels,
             self.bottleneck_channels,
             groups=self.bottleneck_channels,
@@ -130,8 +130,8 @@ class ShuffleUnit(nn.Module):
         else:
             return conv
 
-    def _make_conv3x3(self, in_channels, out_channels, groups,
-                      padding=1, batch_norm=True):
+    def _make_grouped_conv3x3(self, in_channels, out_channels, groups,
+                              padding=1, batch_norm=True):
 
         modules = OrderedDict()
 
