@@ -1,17 +1,14 @@
-import os
-import numpy as np
 from time import time
 from collections import OrderedDict
 
 import torch
-import torchvision
-import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+
 
 def channel_shuffle(x, groups):
     batchsize, channels, height, width = x.data.size()
@@ -31,6 +28,7 @@ def channel_shuffle(x, groups):
     x = x.view(batchsize, -1, height, width)
 
     return x
+
 
 class ShuffleUnit(nn.Module):
 

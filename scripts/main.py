@@ -6,6 +6,7 @@ from torch.utils.data import Subset, DataLoader
 import numpy as np
 
 from shufflenet_model import ShuffleNet
+from conv_model import ConvNet
 
 # Set random seed
 np.random.seed(0)
@@ -56,7 +57,7 @@ def load_cifar10_data():
 if __name__ == "__main__":
     trainloader, valloader, testloader = load_cifar10_data()
 
-    net = ShuffleNet(groups=GROUPS, num_classes=len(CLASSES))
+    net = ConvNet(in_channels=3, num_classes=len(CLASSES))
     net.backward(trainloader, valloader, epochs=EPOCHS)
     net.accuracy(testloader)
 
