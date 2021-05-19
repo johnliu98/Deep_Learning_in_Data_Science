@@ -5,7 +5,7 @@ from torch.utils.data import Subset, DataLoader
 
 import numpy as np
 
-from model import ShuffleNet
+from shufflenet_model import ShuffleNet
 
 # Set random seed
 np.random.seed(0)
