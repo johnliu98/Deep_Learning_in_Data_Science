@@ -1,11 +1,9 @@
 
 import torch
-import torchvision
 from torchvision import transforms, datasets
 from torch.utils.data import Subset, DataLoader
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from model import ShuffleNet
 
