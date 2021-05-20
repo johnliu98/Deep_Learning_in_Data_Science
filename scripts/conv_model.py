@@ -29,7 +29,7 @@ class ConvNet(nn.Module):
         self.fc1 = nn.Linear(self._to_linear, 64)  # flattening.
         self.fc2 = nn.Linear(64, self.num_classes)
 
-        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.001, weight_decay=4e-5)
         self.loss_function = nn.NLLLoss()
 
     def convs(self, x):
@@ -82,8 +82,8 @@ class ConvNet(nn.Module):
                             tot_val_loss += val_loss.item()
                         val_losses.append(tot_val_loss / N_val)
 
-                    print('[%d, %5d] train_loss: %.3f, val_loss: %.3f' %
-                          (epoch + 1, i + 1, train_loss / 10, tot_val_loss / N_val))
+                    # print('[%d, %5d] train_loss: %.3f, val_loss: %.3f' %
+                    #       (epoch + 1, i + 1, train_loss / 10, tot_val_loss / N_val))
                     train_loss = 0.0
 
         plt.plot(train_losses)

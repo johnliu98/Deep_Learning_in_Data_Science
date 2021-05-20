@@ -1,4 +1,3 @@
-
 import torch
 from torchvision import transforms, datasets
 from torch.utils.data import Subset, DataLoader
@@ -11,21 +10,6 @@ from conv_model import ConvNet
 # Set random seed
 np.random.seed(0)
 torch.manual_seed(0)
-
-# Run on GPU if possible, otherwise run on CPU
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-    print("Running on GPU...")
-else:
-    device = torch.device("cpu")
-    print("Running on CPU...")
-
-CLASSES = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-EPOCHS = 1
-BATCH_SIZE = 100
-GROUPS = 1
 
 def load_cifar10_data():
     # Upload data
@@ -55,9 +39,25 @@ def load_cifar10_data():
     return trainloader, valloader, testloader
 
 if __name__ == "__main__":
+
+    # Run on GPU if possible, otherwise run on CPU
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+        print("Running on GPU...")
+    else:
+        device = torch.device("cpu")
+        print("Running on CPU...")
+
+    CLASSES = ('plane', 'car', 'bird', 'cat',
+               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    EPOCHS = 1
+    BATCH_SIZE = 100
+    GROUPS = 1
+
     trainloader, valloader, testloader = load_cifar10_data()
 
-    net = ConvNet(in_channels=3, num_classes=len(CLASSES))
+    net = ShuffleNet(in_channels=3, num_classes=len(CLASSES))
     net.backward(trainloader, valloader, epochs=EPOCHS)
     net.accuracy(testloader)
 

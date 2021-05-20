@@ -153,7 +153,6 @@ class ShuffleNet(nn.Module):
 
     def __init__(self, groups=3, in_channels=3, num_classes=10):
         """ShuffleNet constructor.
-
         Arguments:
             groups (int, optional): number of groups to be used in grouped
                 1x1 convolutions in each ShuffleUnit. Default is 3 for best
@@ -162,7 +161,6 @@ class ShuffleNet(nn.Module):
                 Default is 3 for RGB image inputs.
             num_classes (int, optional): number of classes to predict. Default
                 is 1000 for ImageNet.
-
         """
         super(ShuffleNet, self).__init__()
 
@@ -345,3 +343,4 @@ class ShuffleNet(nn.Module):
 
     def load_network(self, path, device):
         self.load_state_dict(torch.load(path, device))
+
