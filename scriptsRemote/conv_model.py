@@ -17,8 +17,8 @@ class ConvNet(nn.Module):
         self.in_channels = in_channels
         self.num_classes = num_classes
 
-        self.conv1 = nn.Conv2d(in_channels=self.in_channels, out_channels=6, kernel_size=3)
-        self.conv2 = nn.Conv2d(in_channels=6, out_channels=16, kernel_size=3)
+        self.conv1 = nn.Conv2d(in_channels=self.in_channels, out_channels=12, kernel_size=3)
+        self.conv2 = nn.Conv2d(in_channels=12, out_channels=16, kernel_size=3)
         self.conv3 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3)
         self.maxpool = nn.MaxPool2d(kernel_size=2)
 
@@ -114,7 +114,3 @@ class ConvNet(nn.Module):
 
     def load_network(self, path, device):
         self.load_state_dict(torch.load(path, device))
-
-
-
-

@@ -77,7 +77,7 @@ def main():
             acc = accuracy(test_loader, model, gpu)
             hyperparameters.append((acc, deepcopy(args)))
 
-        hyper_file = open("hyperparameter_tuning.pkl", "wb")
+        hyper_file = open("hyperparameter_tuning_g_" + str(args.groups) + ".pkl", "wb")
         print('Saving hyperparameters...')
         pickle.dump(hyperparameters, hyper_file)
         hyper_file.close()

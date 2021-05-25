@@ -1,6 +1,6 @@
 import pickle
 
-hyper_file = open("hyperparameter_tuning.pkl", "rb")
+hyper_file = open("hyperparameter_tuning_g_12.pkl", "rb")
 
 hyperparameters = pickle.load(hyper_file)
 # hyperparameters = hyperparameters.join()
