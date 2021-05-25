@@ -45,7 +45,7 @@ for (acc, params) in data_12:
 #create regular grid
 xmin = min(lrs_8+lrs_12); xmax = max(lrs_8+lrs_12)
 ymin = min(bss_8+bss_12); ymax = max(bss_8+bss_12)
-xi, yi = np.linspace(xmin, xmax, 500), np.linspace(ymin, ymax, 500)
+xi, yi = np.linspace(xmin, xmax, 1000), np.linspace(ymin, ymax, 1000)
 
 xi, yi = np.meshgrid(xi, yi)
 
@@ -59,7 +59,7 @@ xi = np.exp(xi)
 
 #plot data
 fig, ax = plt.subplots()
-cs = ax.contourf(xi, yi, zi8, levels=np.linspace(30, 65, 8))
+cs = ax.contourf(xi, yi, zi8, levels=[30, 50, 52, 54, 56, 58, 60, 62])
 cbar = fig.colorbar(cs)
 cbar.ax.set_ylabel('test accuracy')
 ax.set_xlabel('learning rate')
@@ -68,7 +68,7 @@ ax.set_xscale('log')
 plt.savefig('./hyperparameter_tuning/hyperparameter_tuning_8_groups.eps', format='eps')
 
 fig, ax = plt.subplots()
-cs = ax.contourf(xi, yi, zi12, levels=np.linspace(30, 65, 8))
+cs = ax.contourf(xi, yi, zi12, levels=[30, 50, 52, 54, 56, 58, 60, 62])
 cbar = fig.colorbar(cs)
 cbar.ax.set_ylabel('test accuracy')
 ax.set_xlabel('learning rate')
