@@ -6,8 +6,8 @@ from conv_model import ConvNet
 
 # Create a network and a corresponding input
 device = 'cuda:0'
-model = ConvNet().to(device)
-inp = torch.rand(1,3,224,224).to(device)
-
+model = ShuffleNet()
+inp = torch.randn(2,3,224,224)
+print(sum(p.numel() for p in model.parameters() if p.requires_grad))
 # Count the number of FLOPs
 count_ops(model, inp)

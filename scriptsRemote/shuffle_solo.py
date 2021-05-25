@@ -12,6 +12,7 @@ import torch.distributed as dist
 from collections import OrderedDict
 from torch.cuda import amp
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 from tqdm import tqdm
@@ -19,7 +20,7 @@ import pickle
 from copy import deepcopy
 
 from shufflenet_model import ShuffleNet
-#from conv_model import ConvNet
+from conv_model import ConvNet
 
 
 def main():
@@ -36,6 +37,8 @@ def main():
                         help='number of random searches')
     parser.add_argument('-hyp', '--hyper', default=0, type=int, metavar='H',
                         help='hyperparameter_search_enable')
+    parser.add_argument('-net', '--network', default="shuffle", type=str, metavar='NET',
+                        help='network')
     args = parser.parse_args()
 
     # Data loading code
@@ -66,7 +69,7 @@ def main():
         for i in range(args.hiters):
             np.random.seed() # DIFFERENT SEEDS EVERYTIME! (note, a set seed inside
     #                                                    to make init the same)
-            args.learning_rate = 10**(np.random.rand()*3-4)
+            args.learning_rate = 10**(np.random.rand()*1.7-3)
             args.batch_size = int(2**(np.random.rand()*3 + 6))
             print('\n======================================================\n')
             print('learning_rate=%.5f, batch_size=%.0f, groups=%.0f' % \
@@ -135,39 +138,45 @@ def load_cifar10_data(args):
 
     return train_loader, val_loader, test_loader
 
-def accuracy(testloader, model, gpu):
+def accuracy(loader, model, gpu):
 
     correct = 0
     total = 0
     # since we're not training, we don't need to calculate the gradients for our outputs
     with torch.no_grad():
-        for (X_test, y_test) in tqdm(testloader):
-            X_test = X_test.cuda(non_blocking=True)
-            y_test = y_test.cuda(non_blocking=True)
+        for (X, y) in tqdm(loader):
+            X = X.cuda(non_blocking=True)
+            y = y.cuda(non_blocking=True)
             # calculate outputs by running images through the network
-            y_pred = model(X_test).cuda(gpu)
+            y_pred = model(X).cuda(gpu)
             # the class with the highest energy is what we choose as prediction
             _, predicted = torch.max(y_pred.data, 1)
-            total += y_test.size(0)
-            correct += (predicted == y_test).sum().item()
+            total += y.size(0)
+            correct += (predicted == y).sum().item()
 
     acc = 100 * correct / total
-    print('Accuracy of the network on the 10000 test images: %d %%' % acc)
+    print('Accuracy: %d %%' % acc)
 
     return acc
 
 def train(train_loader, val_loader, gpu, args):
+    writer = SummaryWriter()
     torch.manual_seed(0)
     np.random.seed(0)
-    model = ShuffleNet(groups=args.groups)
+    if args.network == "convnet":
+        model = ConvNet()
+    else:
+        model = ShuffleNet(groups=args.groups)
     torch.cuda.set_device(gpu)
     model.cuda(gpu)
     # define loss function (criterion) and optimizer
+
     criterion = nn.NLLLoss().cuda(gpu)
     optimizer = torch.optim.Adam(model.parameters(), args.learning_rate)
 
     start = datetime.now()
     total_step = len(train_loader)
+    j = 0
     for epoch in range(args.epochs):
         for i, (images, labels) in enumerate(tqdm(train_loader)):
             images = images.cuda(non_blocking=True)
@@ -180,9 +189,14 @@ def train(train_loader, val_loader, gpu, args):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            if (i + 1) % 100 == 0 and gpu == 0:
-                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch + 1, args.epochs, i + 1, total_step,
-                                                                         loss.item()))
+            j += 1
+            if (i + 1) % 5 == 0:
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch + 1, args.epochs, i + 1, total_step, loss.item()))
+                writer.add_scalar('Accuracy/val'+ str(args.network), accuracy(val_loader, model, gpu), j*args.batch_size)
+                writer.add_scalar('Accuracy/train' + str(args.network), accuracy(train_loader, model, gpu), j*args.batch_size)
+                writer.add_scalar('Loss/val'+ str(args.network), loss, j*args.batch_size)
+                writer.add_scalar('Loss/train'+ str(args.network), loss, j*args.batch_size)
+
     if gpu == 0:
         print("Training complete in: " + str(datetime.now() - start))
 

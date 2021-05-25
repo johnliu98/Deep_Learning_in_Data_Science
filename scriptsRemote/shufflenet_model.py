@@ -191,8 +191,8 @@ class ShuffleNet(nn.Module):
         # Stage 1 always has 24 output channels
         self.conv1 = nn.Conv2d(
             self.in_channels, self.stage_out_channels[1],
-            kernel_size=3, stride=3, padding=1
-        )
+            kernel_size=3, stride=2, padding=1
+        ) 
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         # Stage 2
