@@ -46,7 +46,7 @@ for (acc, params) in data_c:
 xmin = min(lrs_8+lrs_12+lrs_c); xmax = max(lrs_8+lrs_12+lrs_c)
 ymin = min(bss_8+bss_12+bss_c); ymax = max(bss_8+bss_12+bss_c)
 
-xi, yi = np.linspace(xmin, xmax, 1000), np.linspace(ymin, ymax, 1000)
+xi, yi = np.linspace(xmin, xmax, 100), np.linspace(ymin, ymax, 100)
 xi, yi = np.meshgrid(xi, yi)
 
 #interpolate missing data
@@ -64,7 +64,7 @@ xi = np.exp(xi)
 
 #plot data
 fig, ax = plt.subplots()
-cs = ax.contourf(xi, yi, zi8, levels=[40, 45, 50, 55, 60, 65, 70, 75])
+cs = ax.contourf(xi, yi, zi8)
 cbar = fig.colorbar(cs)
 cbar.ax.set_ylabel('test accuracy')
 ax.set_xlabel('learning rate')
@@ -73,7 +73,7 @@ ax.set_xscale('log')
 plt.savefig('./hyperparameter_tuning/ShuffleNet_g_8.eps', format='eps')
 
 fig, ax = plt.subplots()
-cs = ax.contourf(xi, yi, zi12, levels=[40, 45, 50, 55, 60, 65, 70, 75])
+cs = ax.contourf(xi, yi, zi12)
 cbar = fig.colorbar(cs)
 cbar.ax.set_ylabel('test accuracy')
 ax.set_xlabel('learning rate')
@@ -82,7 +82,7 @@ ax.set_xscale('log')
 plt.savefig('./hyperparameter_tuning/ShuffleNet_g_12.eps', format='eps')
 
 fig, ax = plt.subplots()
-cs = ax.contourf(xi, yi, zic, levels=[40, 45, 50, 55, 60, 65, 70, 75])
+cs = ax.contourf(xi, yi, zic)
 cbar = fig.colorbar(cs)
 cbar.ax.set_ylabel('test accuracy')
 ax.set_xlabel('learning rate')
