@@ -32,7 +32,7 @@ def channel_shuffle(x, groups):
 
 class ShuffleUnit(nn.Module):
 
-    def __init__(self, in_channels, out_channels, groups=3,
+    def __init__(self, in_channels, out_channels, groups=8,
                  grouped_conv=True, combine='add'):
         super(ShuffleUnit, self).__init__()
 
@@ -151,7 +151,7 @@ class ShuffleNet(nn.Module):
     """ShuffleNet implementation.
     """
 
-    def __init__(self, groups=3, in_channels=3, num_classes=10):
+    def __init__(self, groups=8, in_channels=3, num_classes=10):
         """ShuffleNet constructor.
         Arguments:
             groups (int, optional): number of groups to be used in grouped
@@ -192,7 +192,7 @@ class ShuffleNet(nn.Module):
         self.conv1 = nn.Conv2d(
             self.in_channels, self.stage_out_channels[1],
             kernel_size=3, stride=2, padding=1
-        ) 
+        )
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         # Stage 2

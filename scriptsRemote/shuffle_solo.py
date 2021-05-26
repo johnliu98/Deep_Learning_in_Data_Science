@@ -75,20 +75,20 @@ def main():
             print('learning_rate=%.5f, batch_size=%.0f, groups=%.0f' % \
             (args.learning_rate, args.batch_size, args.groups))
             print('Iteration: ' + str(i) + ', total done: ' + str(i/args.hiters))
-            train_loader, val_loader, test_loader = load_cifar10_data(args)
-            model = train(train_loader, val_loader, gpu, args)
+            train_loader, val_loader, test_loader, trainset, valset = load_cifar10_data(args)
+            model = train(train_loader, val_loader, trainset, valset,gpu, args)
             acc = accuracy(test_loader, model, gpu)
             hyperparameters.append((acc, deepcopy(args)))
-
-        hyper_file = open("hyperparameter_tuning_g_" + str(args.groups) + ".pkl", "wb")
+        if args.network == "convnet":
+            hyper_file = open("hyperparameter_tuning_convnet.pkl", "wb")
+        else:
+            hyper_file = open("hyperparameter_tuning_g_" + str(args.groups) + ".pkl", "wb")
         print('Saving hyperparameters...')
         pickle.dump(hyperparameters, hyper_file)
         hyper_file.close()
     else:
-        train_loader, val_loader, test_loader = load_cifar10_data(args)
-        model = train(train_loader, val_loader, gpu, args)
-        acc = accuracy(test_loader, model, gpu)
-        print(acc)
+        train_loader, val_loader, test_loader,trainset, valset = load_cifar10_data(args)
+        model = train(train_loader, val_loader, trainset, valset, gpu, args)
 
 
 def channel_shuffle(x, groups):
@@ -122,7 +122,7 @@ def load_cifar10_data(args):
 
     inds = torch.randperm(len(dataset))
     train_inds = inds[:45000]
-    val_inds = inds[45000:]
+    val_inds = inds[45001:]
 
     trainset = Subset(dataset, train_inds)
     valset = Subset(dataset, val_inds)
@@ -136,7 +136,7 @@ def load_cifar10_data(args):
     test_loader = DataLoader(testset, batch_size=args.batch_size,
                             shuffle=False, pin_memory=True, drop_last=True)
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader, trainset, valset
 
 def accuracy(loader, model, gpu):
 
@@ -159,7 +159,7 @@ def accuracy(loader, model, gpu):
 
     return acc
 
-def train(train_loader, val_loader, gpu, args):
+def train(train_loader, val_loader, trainset, valset, gpu, args):
     writer = SummaryWriter()
     torch.manual_seed(0)
     np.random.seed(0)
@@ -179,6 +179,7 @@ def train(train_loader, val_loader, gpu, args):
     j = 0
     for epoch in range(args.epochs):
         for i, (images, labels) in enumerate(tqdm(train_loader)):
+            model.train()
             images = images.cuda(non_blocking=True)
             labels = labels.cuda(non_blocking=True)
             # Forward pass
@@ -190,13 +191,24 @@ def train(train_loader, val_loader, gpu, args):
             loss.backward()
             optimizer.step()
             j += 1
-            if (i + 1) % 5 == 0:
-                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch + 1, args.epochs, i + 1, total_step, loss.item()))
-                writer.add_scalar('Accuracy/val'+ str(args.network), accuracy(val_loader, model, gpu), j*args.batch_size)
-                writer.add_scalar('Accuracy/train' + str(args.network), accuracy(train_loader, model, gpu), j*args.batch_size)
-                writer.add_scalar('Loss/val'+ str(args.network), loss, j*args.batch_size)
-                writer.add_scalar('Loss/train'+ str(args.network), loss, j*args.batch_size)
+            if (i + 1) % 30 == 0:
+                with torch.no_grad():
+                    print('Epoch [{}/{}], Step [{}/{}]'.format(epoch + 1, args.epochs, i + 1, total_step))
+                    if args.hyper == 0:
+                        model.eval()
+                        writer.add_scalar('Accuracy/trainshuffle', accuracy(train_loader, model, gpu), j*args.batch_size)
+                        writer.add_scalar('Accuracy/valshuffle', accuracy(val_loader, model, gpu), j*args.batch_size)
 
+                        #valImages, valLabels = valset[:].cuda(non_blocking=True)
+                        val_loss_avg = 0.0
+                        for valImages, valLabels in val_loader:
+                            valImages, valLabels = valImages.cuda(non_blocking=True), valLabels.cuda(non_blocking=True)
+                            val_out = model(valImages)
+                            val_loss = criterion(val_out, valLabels)
+                            val_loss_avg += val_loss/len(val_loader)
+
+                        writer.add_scalar('Loss/trainshuffle', loss, j*args.batch_size)
+                        writer.add_scalar('Loss/valshuffle', val_loss_avg, j*args.batch_size)
     if gpu == 0:
         print("Training complete in: " + str(datetime.now() - start))
 
