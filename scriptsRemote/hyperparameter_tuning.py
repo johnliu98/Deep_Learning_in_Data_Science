@@ -14,7 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 file_8 = open("./hyperparameter_tuning/ShuffleNet_g_8.pkl", "rb")
 file_12 = open("./hyperparameter_tuning/ShuffleNet_g_12.pkl", "rb")
-file_c = open("./hyperparameter_tuning/ConvNet.pkl", "rb")
+file_c = open("./hyperparameter_tuning/hyperparameter_tuning_convnet.pkl", "rb")
 
 data_8 = pickle.load(file_8)
 data_12 = pickle.load(file_12)
@@ -44,7 +44,7 @@ for (acc, params) in data_c:
 
 #create regular grid
 xmin = min(lrs_8+lrs_12+lrs_c); xmax = max(lrs_8+lrs_12+lrs_c)
-ymin = min(bss_8+bss_12+bss_c); ymax = max(bss_8+bss_12+bss_c)
+ymin = min(bss_8+bss_12+bss_c); ymax = 450 #max(bss_8+bss_12+bss_c)
 
 xi, yi = np.linspace(xmin, xmax, 100), np.linspace(ymin, ymax, 100)
 xi, yi = np.meshgrid(xi, yi)
@@ -62,7 +62,6 @@ zic = rbfc(xi, yi)
 
 xi = np.exp(xi)
 
-#plot data
 fig, ax = plt.subplots()
 cs = ax.contourf(xi, yi, zi8)
 cbar = fig.colorbar(cs)
